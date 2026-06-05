@@ -79,6 +79,8 @@ C4Container
 | **Ciclo 1** | Visão, requisitos e classificação estratégica "Ousada" | [docs/entrega-ciclo-1.md](docs/entrega-ciclo-1.md) |
 | **Gold Plating** | Extras: diagramas adicionais, CI, ADR 0004, Makefile | [gold-plating/README.md](gold-plating/README.md) |
 
+> **Nota:** Não consegui localizar os templates oficiais (`Template_ADR.md` e `Template_Scaffolding_README.md`) no AVA. Os ADRs seguem o padrão **MADR/Nygard** (Status · Contexto · Decisão · Consequências · Alternativas rejeitadas · Referências) e o README segue a estrutura exigida pelo enunciado.
+
 ---
 
 ## Atributos de Qualidade Prioritários
