@@ -44,7 +44,7 @@ O **EduVerse** � uma plataforma de aprendizado adaptativo projetada para mitig
 
 ### 1.3 Diagrama de Contexto (C4 N�vel 1)
 
-Diagrama em /diagrams/diagrama-c4.png
+Diagrama em /docs/diagrams/diagrama-c4.png
 
 ---
 

@@ -1,0 +1,83 @@
+services:
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Redis — cache do Recommendation Service (ADR 0001: tática de performance)
+  # ─────────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: eduverse-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Recommendation Service — motor de recomendação + XAI (RF01)
+  # ─────────────────────────────────────────────────────────────────────────
+  recommendation-service:
+    build:
+      context: ./src/recommendation-service
+      dockerfile: Dockerfile
+    container_name: eduverse-recommendation
+    environment:
+      REDIS_URL: redis://redis:6379
+      CACHE_TTL_SECONDS: "300"
+    ports:
+      - "8001:8001"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Content Service — catálogo de materiais (RF01)
+  # ─────────────────────────────────────────────────────────────────────────
+  content-service:
+    build:
+      context: ./src/content-service
+      dockerfile: Dockerfile
+    container_name: eduverse-content
+    ports:
+      - "8002:8002"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # API Gateway — ponto de entrada único (ADR 0002: Circuit Breaker + roteamento)
+  # ─────────────────────────────────────────────────────────────────────────
+  api-gateway:
+    build:
+      context: ./src/api-gateway
+      dockerfile: Dockerfile
+    container_name: eduverse-gateway
+    environment:
+      RECOMMENDATION_SERVICE_URL: http://recommendation-service:8001
+      CONTENT_SERVICE_URL: http://content-service:8002
+      CB_FAILURE_THRESHOLD: "3"
+      CB_RESET_SECONDS: "30"
+      REQUEST_TIMEOUT_SECONDS: "2.5"
+    ports:
+      - "8080:8080"
+    depends_on:
+      recommendation-service:
+        condition: service_healthy
+      content-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
